@@ -1,5 +1,6 @@
 # Unique directories to ignore
 __pycache__/
+quick/
 
 # Unique file extensions to ignore
 *.backup
