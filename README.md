@@ -1,0 +1,3 @@
+This repository is designed to be used by devs working on the wxUiEditor program (https://github.com/KeyWorksRW/wxUiEditor). It's specifically designed to test code generation for C++, wxPerl, wxPython, wxRuby and XRC.
+
+For the script languages, you can simply load a wxUiEditor project file from the root of this project, and generate any of the script languages. However for C++, you will need to have a clone or fork of the wxFetch repository (https://github.com/KeyWorksRW/wxFetch) at the same level as this repository, as it will need access to the wxWidgets files in this directory for wxWidgets header files and to build the wxWidgets library.
