@@ -156,8 +156,8 @@ class PythonDlg(wx.Dialog):
         self.Centre(wx.BOTH)
 
         # Bind Event handlers
-        self.Bind(wx.EVT_UPDATE_UI, self.on_update_close, self, wx.ID_CLOSE)
-        self.Bind(wx.EVT_BUTTON, self.on_close, self, wx.ID_CLOSE)
+        self.Bind(wx.EVT_UPDATE_UI, self.on_update_close, self.stdBtn_close, self.on_update_close)
+        self.Bind(wx.EVT_BUTTON, self.on_close, self.stdBtn_close, self.on_close)
         self.Bind(wx.EVT_INIT_DIALOG, self.OnInit)
         self.toggleBtn.Bind(wx.EVT_TOGGLEBUTTON, lambda event:self.animation_ctrl.Play())
 

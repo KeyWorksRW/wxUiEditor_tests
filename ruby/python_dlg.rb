@@ -115,8 +115,8 @@ class PythonDlg < Wx::Dialog
     centre(Wx::BOTH)
 
     # Event handlers
-    evt_update_ui(self, Wx::ID_CLOSE)
-    evt_button(self, Wx::ID_CLOSE)
+    evt_update_ui(@stdBtn_close.get_id, :on_update_close)
+    evt_button(@stdBtn_close.get_id, :on_close)
     evt_checkbox(@checkPlayAnimation.get_id, :OnEvent)
     evt_init_dialog(:OnInit)
     evt_togglebutton(@toggleBtn.get_id, :OnEvent)
