@@ -6,22 +6,6 @@ project( wxUiTesting
     DESCRIPTION "wxUiTesting Apps"
     HOMEPAGE_URL "https://github.com/KeyWorksRW/wxUiEditor_tests" )
 
-# ###################### Options #######################
-
-# creates a compile_commands.json file in the build directory, suitable for clangd
-set( CMAKE_EXPORT_COMPILE_COMMANDS ON )
-
-option( BUILD_SHARED_LIBS "Build with wxWidgets shared libraries" OFF )
-
-if( BUILD_SHARED_LIBS )
-    message( NOTICE "Building with wxWidgets shared libraries" )
-else()
-    message( NOTICE "Building with wxWidgets static libraries" )
-endif()
-
-option( INTERNAL_DARK_MODE "Enable dark mode (used with wxWidgets 3.3 in _WIN32 builds)" OFF )
-option( INTERNAL_DARK_HIGH_CONTRAST "Enable dark mode high contrast (used with wxWidgets 3.3 in _WIN32 builds)" OFF )
-
 # ###################### Check for Multi-Config Generator #######################
 get_property( isMultiConfig GLOBAL PROPERTY GENERATOR_IS_MULTI_CONFIG )
 
@@ -38,6 +22,22 @@ if( NOT isMultiConfig )
         message( FATAL_ERROR "Unknown build type: ${CMAKE_BUILD_TYPE}" )
     endif()
 endif()
+
+# ###################### Options #######################
+
+# creates a compile_commands.json file in the build directory, suitable for clangd
+set( CMAKE_EXPORT_COMPILE_COMMANDS ON )
+
+option( BUILD_SHARED_LIBS "Build with wxWidgets shared libraries" OFF )
+
+if( BUILD_SHARED_LIBS )
+    message( NOTICE "Building with wxWidgets shared libraries" )
+else()
+    message( NOTICE "Building with wxWidgets static libraries" )
+endif()
+
+option( INTERNAL_DARK_MODE "Enable dark mode (used with wxWidgets 3.3 in _WIN32 builds)" OFF )
+option( INTERNAL_DARK_HIGH_CONTRAST "Enable dark mode high contrast (used with wxWidgets 3.3 in _WIN32 builds)" OFF )
 
 # ###################### General Settings #######################
 set( CMAKE_CXX_STANDARD 17 )
@@ -98,58 +98,78 @@ endif()
 
 # ###################### Set wxWidgets location macros #######################
 if( WIN32 )
-    set( wxWidgets_REQUIRED_COMPONENTS base core lunasvg html xml aui richtext ribbon propgrid webview stc xrc )
+    set( wxWidgets_REQUIRED_COMPONENTS base core lunasvg aui html ribbon richtext propgrid webview stc xml xrc )
 else()
-    set( wxWidgets_REQUIRED_COMPONENTS base core lunasvg html xml aui richtext ribbon propgrid stc xrc )
+    set( wxWidgets_REQUIRED_COMPONENTS base core lunasvg aui html ribbon richtext propgrid stc xml xrc )
 endif()
 
-include( FetchContent )
+# Check if we're in wxUiEditor/.local/ and can use the parent's wxWidgets build
+get_filename_component( PARENT_WX_SRC "${CMAKE_CURRENT_LIST_DIR}/../../build/_deps/wxwidgets-src" REALPATH )
+get_filename_component( PARENT_WX_BUILD "${CMAKE_CURRENT_LIST_DIR}/../../build/_deps/wxwidgets-build" REALPATH )
 
-# Set wxWidgets build options BEFORE FetchContent_MakeAvailable
-set( wxBUILD_SHARED OFF CACHE BOOL "Build static wx libraries" )
-set( wxUSE_UNICODE_UTF8 1 CACHE BOOL "Use UTF-8 internally in wxWidgets" )
-set( wxUSE_UTF8_LOCALE_ONLY 1 CACHE BOOL "Use UTF-8 locale only in wxWidgets" )
-set( wxUSE_GUI ON CACHE BOOL "This is a GUI application" FORCE )
-set( wxUSE_LUNASVG ON CACHE BOOL "Use LunaSVG for rendering SVG images" FORCE )
-set( wxUSE_NANOSVG OFF CACHE BOOL "Use NanoSVG for rendering SVG images" FORCE )
-set( wxBUILD_INSTALL OFF CACHE BOOL "Don't build wxWidgets install" )
-
-# On Windows, the only browser backend that ships with Windows 10 and 11 is IE.
-# To use the Edge backend, we would need to install the WebView2 runtime.
-set( wxUSE_WEBVIEW_EDGE OFF CACHE BOOL "Use wxWebView Edge backend for web viewing" )
-
-if( WIN32 )
-    set( wxUSE_WEBVIEW_IE ON CACHE BOOL "Use wxWebView IE backend for web viewing" )
-    set( wxUSE_WEBVIEW ON CACHE BOOL "Use wxWidgets' web viewing classes" )
-    set( wxUSE_WEBVIEW_WEBKIT OFF CACHE BOOL "Use wxWebView WebKit for web viewing" )
-elseif( APPLE )
-    # Apple ships with WebKit, so this should get enabled once it is verified
-    # that it works
-    # set( wxUSE_WEBVIEW ON CACHE BOOL "Don't use wxWidgets' web viewing classes" )
-    # set( wxUSE_WEBVIEW_WEBKIT ON CACHE BOOL "Use wxWebView WebKit for web viewing" )
-    set( wxUSE_WEBVIEW OFF CACHE BOOL "Don't use wxWidgets' web viewing classes" )
+set( USE_PARENT_WXWIDGETS OFF )
+if( EXISTS "${PARENT_WX_SRC}" AND EXISTS "${PARENT_WX_BUILD}" )
+    message( NOTICE "Using parent wxUiEditor's wxWidgets build" )
+    set( USE_PARENT_WXWIDGETS ON )
+    set( wxWidgets_SOURCE_DIR "${PARENT_WX_SRC}" )
+    set( wxWidgets_BUILD_DIR "${PARENT_WX_BUILD}" )
+    set( WX_LIB_DIR "${PARENT_WX_BUILD}/lib/vc_x64_lib" )
+    get_filename_component( WX_DEBUG_LIB_DIR "${CMAKE_CURRENT_LIST_DIR}/../../build/lib/Debug" REALPATH )
+    get_filename_component( WX_RELEASE_LIB_DIR "${CMAKE_CURRENT_LIST_DIR}/../../build/lib/Release" REALPATH )
+    message( STATUS "wxWidgets sources: ${wxWidgets_SOURCE_DIR}" )
+    message( STATUS "wxWidgets build: ${wxWidgets_BUILD_DIR}" )
 else()
-    # Unix doesn't ship WebKit on all platforms, so we can't use it unless we
-    # install it.
-    set( wxUSE_WEBVIEW OFF CACHE BOOL "Don't use wxWidgets' web viewing classes" )
+    # Fall back to FetchContent method
+    message( NOTICE "Parent wxWidgets build not found, using FetchContent method" )
+
+    include( FetchContent )
+
+    # Set wxWidgets build options BEFORE FetchContent_MakeAvailable
+    set( wxBUILD_SHARED OFF CACHE BOOL "Build static wx libraries" )
+    set( wxUSE_UNICODE_UTF8 1 CACHE BOOL "Use UTF-8 internally in wxWidgets" )
+    set( wxUSE_UTF8_LOCALE_ONLY 1 CACHE BOOL "Use UTF-8 locale only in wxWidgets" )
+    set( wxUSE_GUI ON CACHE BOOL "This is a GUI application" FORCE )
+    set( wxUSE_LUNASVG ON CACHE BOOL "Use LunaSVG for rendering SVG images" FORCE )
+    set( wxUSE_NANOSVG OFF CACHE BOOL "Use NanoSVG for rendering SVG images" FORCE )
+    set( wxBUILD_INSTALL OFF CACHE BOOL "Don't build wxWidgets install" )
+
+    # On Windows, the only browser backend that ships with Windows 10 and 11 is IE.
+    # To use the Edge backend, we would need to install the WebView2 runtime.
+    set( wxUSE_WEBVIEW_EDGE OFF CACHE BOOL "Use wxWebView Edge backend for web viewing" )
+
+    if( WIN32 )
+        set( wxUSE_WEBVIEW_IE ON CACHE BOOL "Use wxWebView IE backend for web viewing" )
+        set( wxUSE_WEBVIEW ON CACHE BOOL "Use wxWidgets' web viewing classes" )
+        set( wxUSE_WEBVIEW_WEBKIT OFF CACHE BOOL "Use wxWebView WebKit for web viewing" )
+    elseif( APPLE )
+        # Apple ships with WebKit, so this should get enabled once it is verified
+        # that it works
+        # set( wxUSE_WEBVIEW ON CACHE BOOL "Don't use wxWidgets' web viewing classes" )
+        # set( wxUSE_WEBVIEW_WEBKIT ON CACHE BOOL "Use wxWebView WebKit for web viewing" )
+        set( wxUSE_WEBVIEW OFF CACHE BOOL "Don't use wxWidgets' web viewing classes" )
+    else()
+        # Unix doesn't ship WebKit on all platforms, so we can't use it unless we
+        # install it.
+        set( wxUSE_WEBVIEW OFF CACHE BOOL "Don't use wxWidgets' web viewing classes" )
+    endif()
+
+    # Prevent FetchContent from updating wxWidgets after initial download
+    set( FETCHCONTENT_UPDATES_DISCONNECTED wxWidgets ON CACHE BOOL "Prevent FetchContent from updating wxWidgets after initial download" )
+
+    message( STATUS "Fetching wxWidgets (this may take awhile) ..." )
+
+    FetchContent_Declare(
+        wxWidgets
+        SOURCE_DIR "${CMAKE_CURRENT_LIST_DIR}/../wxFetch"
+    )
+
+    message( NOTICE "Configuring wxWidgets..." )
+
+    FetchContent_MakeAvailable( wxWidgets )
+
+    message( NOTICE "wxWidgets has been fetched and configured." )
+    message( STATUS "wxWidgets sources: ${wxWidgets_SOURCE_DIR}" )
 endif()
-
-# Prevent FetchContent from updating wxWidgets after initial download
-set( FETCHCONTENT_UPDATES_DISCONNECTED wxWidgets ON CACHE BOOL "Prevent FetchContent from updating wxWidgets after initial download" )
-
-message( STATUS "Fetching wxWidgets (this may take awhile) ..." )
-
-FetchContent_Declare(
-    wxWidgets
-    SOURCE_DIR "${CMAKE_CURRENT_LIST_DIR}/../wxFetch"
-)
-
-message( NOTICE "Configuring wxWidgets..." )
-
-FetchContent_MakeAvailable( wxWidgets )
-
-message( NOTICE "wxWidgets has been fetched and configured." )
-message( STATUS "wxWidgets sources: " ${wxWidgets_SOURCE_DIR} )
 
 # ###################### Libraries and Executables #######################
 
@@ -189,7 +209,7 @@ if( UNIX )
         GLX
     )
 elseif( WIN32 )
-    set( SYSTEM_LIBS comctl32 Imm32 Shlwapi Version UxTheme )
+    set( SYSTEM_LIBS comctl32 Imm32 Shlwapi Version UxTheme rpcrt4 advapi32 )
 endif()
 
 if( MSVC )
@@ -218,12 +238,10 @@ if( WIN32 )
     )
 elseif( APPLE )
     target_include_directories( ${PROJECT_NAME} PRIVATE
-        ${wxWidgets_SOURCE_DIR}/include
         ${wxWidgets_BUILD_DIR}/lib/osx_cocoa-unicode-static
     )
 elseif( UNIX )
     target_include_directories( ${PROJECT_NAME} PRIVATE
-        ${wxWidgets_SOURCE_DIR}/include
         ${wxWidgets_BUILD_DIR}/lib/gtk3_unixu-3.3/include
     )
 else()
@@ -238,4 +256,71 @@ foreach( component ${wxWidgets_REQUIRED_COMPONENTS} )
     list( APPEND wxWidgets_LIBRARIES wx${component} )
 endforeach()
 
-target_link_libraries( ${PROJECT_NAME} PRIVATE ${wxWidgets_LIBRARIES} ${SYSTEM_LIBS})
+# When using parent's wxWidgets build, link to pre-built libraries
+if( USE_PARENT_WXWIDGETS AND MSVC )
+    target_link_directories( ${PROJECT_NAME} PRIVATE
+        ${WX_LIB_DIR}
+        $<$<CONFIG:Debug>:${WX_DEBUG_LIB_DIR}>
+        $<$<CONFIG:Release>:${WX_RELEASE_LIB_DIR}>
+    )
+
+    target_link_libraries( ${PROJECT_NAME} PRIVATE
+        $<$<CONFIG:Debug>:wxbase33ud>
+        $<$<CONFIG:Debug>:wxbase33ud_net>
+        $<$<CONFIG:Debug>:wxbase33ud_xml>
+        $<$<CONFIG:Debug>:wxexpatd>
+        $<$<CONFIG:Debug>:wxjpegd>
+        $<$<CONFIG:Debug>:wxlexillad>
+        $<$<CONFIG:Debug>:wxlunasvgd>
+        $<$<CONFIG:Debug>:wxmsw33ud_aui>
+        $<$<CONFIG:Debug>:wxmsw33ud_core>
+        $<$<CONFIG:Debug>:wxmsw33ud_gl>
+        $<$<CONFIG:Debug>:wxmsw33ud_html>
+        $<$<CONFIG:Debug>:wxmsw33ud_media>
+        $<$<CONFIG:Debug>:wxmsw33ud_propgrid>
+        $<$<CONFIG:Debug>:wxmsw33ud_ribbon>
+        $<$<CONFIG:Debug>:wxmsw33ud_richtext>
+        $<$<CONFIG:Debug>:wxmsw33ud_stc>
+        $<$<CONFIG:Debug>:wxmsw33ud_webview>
+        $<$<CONFIG:Debug>:wxmsw33ud_xrc>
+        $<$<CONFIG:Debug>:wxpngd>
+        $<$<CONFIG:Debug>:wxregexud>
+        $<$<CONFIG:Debug>:wxscintillad>
+        $<$<CONFIG:Debug>:wxtiffd>
+        $<$<CONFIG:Debug>:wxzlibd>
+
+        $<$<CONFIG:Release>:wxbase33u>
+        $<$<CONFIG:Release>:wxbase33u_net>
+        $<$<CONFIG:Release>:wxbase33u_xml>
+        $<$<CONFIG:Release>:wxexpat>
+        $<$<CONFIG:Release>:wxjpeg>
+        $<$<CONFIG:Release>:wxlexilla>
+        $<$<CONFIG:Release>:wxlunasvg>
+        $<$<CONFIG:Release>:wxmsw33u_aui>
+        $<$<CONFIG:Release>:wxmsw33u_core>
+        $<$<CONFIG:Release>:wxmsw33u_gl>
+        $<$<CONFIG:Release>:wxmsw33u_html>
+        $<$<CONFIG:Release>:wxmsw33u_media>
+        $<$<CONFIG:Release>:wxmsw33u_propgrid>
+        $<$<CONFIG:Release>:wxmsw33u_ribbon>
+        $<$<CONFIG:Release>:wxmsw33u_richtext>
+        $<$<CONFIG:Release>:wxmsw33u_stc>
+        $<$<CONFIG:Release>:wxmsw33u_webview>
+        $<$<CONFIG:Release>:wxmsw33u_xrc>
+        $<$<CONFIG:Release>:wxpng>
+        $<$<CONFIG:Release>:wxregex>
+        $<$<CONFIG:Release>:wxscintilla>
+        $<$<CONFIG:Release>:wxtiff>
+        $<$<CONFIG:Release>:wxzlib>
+
+        # Library names are identical in moth Debug and Release builds
+        wxsharpyuv
+        wxwebp
+        wxwebpdemux
+    )
+    message( STATUS "Added parent wxWidgets debug libraries for Debug builds" )
+
+    target_link_libraries( ${PROJECT_NAME} PRIVATE ${SYSTEM_LIBS} )
+else()
+    target_link_libraries( ${PROJECT_NAME} PRIVATE ${wxWidgets_LIBRARIES} ${SYSTEM_LIBS} )
+endif()
