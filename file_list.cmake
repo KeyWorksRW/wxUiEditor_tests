@@ -52,7 +52,6 @@ set (sdi_ruby_files
 
 set (sdi_other_files
 
-    COVERAGE.md
     README.md
 
     run_cpp_build.cmd
