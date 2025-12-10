@@ -1,0 +1,24 @@
+{
+    "agents": [
+        {
+            "name": "wxPython",
+            "file": ".github/agents/wxpython.agent.md",
+            "description": "Expert in wxPython GUI development and testing"
+        },
+        {
+            "name": "wxRuby",
+            "file": ".github/agents/wxruby.agent.md",
+            "description": "Expert in wxRuby GUI development and testing"
+        },
+        {
+            "name": "wxPerl",
+            "file": ".github/agents/wxperl.agent.md",
+            "description": "Expert in wxPerl GUI development and testing"
+        },
+        {
+            "name": "powershell",
+            "file": ".github/agents/powershell.agent.md",
+            "description": "Expert in powershell GUI development and testing"
+        }
+    ]
+}
